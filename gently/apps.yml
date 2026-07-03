@@ -1,6 +1,6 @@
 # gently workspace runtime config.
-# Declares the toolchain, the Postgres service, and the two processes
-# (web + background worker) that make up this app.
+# Declares the toolchain, the Postgres service, and the three processes
+# (web + websocket server + background worker) that make up this app.
 
 tools:
   - nodejs_22
@@ -8,7 +8,7 @@ tools:
 # Runs once per workspace before apps start (repo root).
 setup:
   - npm install
-  - npm run db:push
+  - npm run db:migrate
 
 services:
   postgres:
@@ -35,7 +35,15 @@ apps:
     startup:
       - npm run dev
 
-  # Port-less app = long-running background process (pg-boss worker).
+  # The realtime WebSocket server. The web app's Vite dev server proxies /ws
+  # here (vite.config.ts), so clients always connect same-origin — no route
+  # needed. Health: GET / on :3001 returns 200.
+  ws:
+    port: 3001
+    startup:
+      - npm run ws
+
+  # Port-less app = long-running background process (the pg-boss worker).
   worker:
     startup:
       - npm run worker

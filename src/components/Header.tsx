@@ -1,53 +1,34 @@
-import { Link } from "@tanstack/react-router";
-import ThemeToggle from "./ThemeToggle";
+import { Link } from '@tanstack/react-router'
 
-const NAV_LINKS = [
-	{ to: "/", label: "Home" },
-	{ to: "/tasks", label: "Tasks" },
-	{ to: "/chat", label: "Chat" },
-	{ to: "/about", label: "About" },
-] as const;
+// Site-wide nav. Add an entry here when you add a page in src/routes/.
+const links = [
+  { to: '/', label: 'Home' },
+  { to: '/tasks', label: 'Tasks' },
+  { to: '/chat', label: 'Chat' },
+  { to: '/about', label: 'About' },
+] as const
 
 export default function Header() {
-	return (
-		<header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--header-bg)] px-4 backdrop-blur-lg">
-			<nav className="page-wrap flex flex-wrap items-center gap-x-3 gap-y-2 py-3 sm:py-4">
-				<h2 className="m-0 flex-shrink-0 text-base font-semibold tracking-tight">
-					<Link
-						to="/"
-						className="inline-flex items-center gap-2 rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1.5 text-sm text-[var(--sea-ink)] no-underline shadow-[0_8px_24px_rgba(30,90,72,0.08)] sm:px-4 sm:py-2"
-					>
-						<span className="h-2 w-2 rounded-full bg-[linear-gradient(90deg,#56c6be,#7ed3bf)]" />
-						TanStack Starter
-					</Link>
-				</h2>
-
-				<div className="order-3 flex w-full flex-wrap items-center gap-x-4 gap-y-1 pb-1 text-sm font-semibold sm:order-none sm:w-auto sm:flex-nowrap sm:pb-0">
-					{NAV_LINKS.map((link) => (
-						<Link
-							key={link.to}
-							to={link.to}
-							className="nav-link"
-							activeProps={{ className: "nav-link is-active" }}
-							activeOptions={{ exact: link.to === "/" }}
-						>
-							{link.label}
-						</Link>
-					))}
-					<a
-						href="https://tanstack.com/start/latest/docs/framework/react/overview"
-						className="nav-link"
-						target="_blank"
-						rel="noreferrer"
-					>
-						Docs
-					</a>
-				</div>
-
-				<div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-					<ThemeToggle />
-				</div>
-			</nav>
-		</header>
-	);
+  return (
+    <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-4xl items-center gap-6 px-4">
+        <Link to="/" className="font-semibold tracking-tight">
+          TanStack Starter
+        </Link>
+        <nav className="flex gap-1 text-sm">
+          {links.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              activeProps={{ className: 'bg-accent text-accent-foreground' }}
+              activeOptions={{ exact: link.to === '/' }}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+    </header>
+  )
 }

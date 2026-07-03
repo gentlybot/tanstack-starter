@@ -1,55 +1,91 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute("/about")({
-	component: About,
-});
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../components/ui/card'
 
-const PIECES = [
-	[
-		"TanStack Start",
-		"SSR, file-based routing, and type-safe server functions.",
-	],
-	[
-		"Postgres + Drizzle",
-		"Typed schema in src/db/schema.ts — push it, query it.",
-	],
-	[
-		"pg-boss jobs",
-		"Background work queued in Postgres, processed by the worker.",
-	],
-	["TanStack AI", "Streaming chat with tool calling at /chat."],
-] as const;
+export const Route = createFileRoute('/about')({ component: AboutPage })
 
-function About() {
-	return (
-		<main className="page-wrap px-4 py-12">
-			<section className="island-shell rounded-2xl p-6 sm:p-8">
-				<p className="island-kicker mb-2">About</p>
-				<h1 className="display-title mb-3 text-4xl font-bold text-[var(--sea-ink)] sm:text-5xl">
-					A starter with room to grow.
-				</h1>
-				<p className="mb-8 max-w-3xl text-base leading-8 text-[var(--sea-ink-soft)]">
-					This template wires together the pieces most apps eventually need —
-					database, background jobs, AI — each demonstrated once so they're easy
-					to copy and extend. The conventions live in AGENTS.md, which doubles
-					as the guide for AI coding agents working in this repo.
-				</p>
-				<dl className="m-0 grid gap-4 sm:grid-cols-2">
-					{PIECES.map(([title, desc]) => (
-						<div
-							key={title}
-							className="rounded-xl border border-[var(--line)] bg-white/40 p-4 dark:bg-white/5"
-						>
-							<dt className="mb-1 text-sm font-semibold text-[var(--sea-ink)]">
-								{title}
-							</dt>
-							<dd className="m-0 text-sm leading-6 text-[var(--sea-ink-soft)]">
-								{desc}
-							</dd>
-						</div>
-					))}
-				</dl>
-			</section>
-		</main>
-	);
+const stack = [
+  {
+    concern: 'Framework',
+    choice: 'TanStack Start (React 19, SSR, Vite)',
+    where: 'src/routes/, vite.config.ts',
+  },
+  {
+    concern: 'Routing',
+    choice: 'TanStack Router — file-based',
+    where: 'src/routes/',
+  },
+  {
+    concern: 'Server RPC',
+    choice: 'Server functions (createServerFn)',
+    where: 'src/functions/',
+  },
+  {
+    concern: 'HTTP endpoints',
+    choice: 'Server routes',
+    where: 'src/routes/api/health.ts',
+  },
+  {
+    concern: 'Client data',
+    choice: 'TanStack Query',
+    where: 'src/routes/tasks.tsx',
+  },
+  {
+    concern: 'Database',
+    choice: 'Postgres + Drizzle ORM, SQL migrations',
+    where: 'src/db/, drizzle/',
+  },
+  {
+    concern: 'Background jobs',
+    choice: 'pg-boss (queues live in Postgres)',
+    where: 'src/jobs/',
+  },
+  {
+    concern: 'Realtime',
+    choice: 'WebSockets — standalone ws process',
+    where: 'src/ws/server.ts, src/components/ChatRoom.tsx',
+  },
+  {
+    concern: 'UI',
+    choice: 'Tailwind CSS v4 + shadcn/ui',
+    where: 'src/components/ui/, src/styles.css',
+  },
+]
+
+function AboutPage() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">The stack</h1>
+        <p className="text-sm text-muted-foreground">
+          Every core pattern is demonstrated exactly once — extend the app by
+          copying the existing example of whatever you&apos;re adding. See{' '}
+          <code className="rounded bg-muted px-1 py-0.5">AGENTS.md</code> for
+          the full conventions.
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {stack.map((item) => (
+          <Card key={item.concern}>
+            <CardHeader className="pb-2">
+              <CardDescription>{item.concern}</CardDescription>
+              <CardTitle className="text-base">{item.choice}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <code className="text-xs text-muted-foreground">
+                {item.where}
+              </code>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
 }

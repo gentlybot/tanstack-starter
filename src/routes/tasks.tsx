@@ -1,147 +1,116 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { desc } from "drizzle-orm";
-import { useState } from "react";
+import { useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { db } from "#/db/index";
-import type { Task, TaskStatus } from "#/db/schema";
-import { tasks } from "#/db/schema";
-import { enqueue } from "#/jobs/boss";
-import type { ProcessTaskPayload } from "#/jobs/queues";
-import { PROCESS_TASK } from "#/jobs/queues";
+import { createTask, listTasks } from '../functions/tasks'
+import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
+import { Card, CardContent } from '../components/ui/card'
+import { Input } from '../components/ui/input'
 
-const listTasks = createServerFn({ method: "GET" }).handler(async () => {
-	return await db.query.tasks.findMany({
-		orderBy: [desc(tasks.createdAt)],
-		limit: 50,
-	});
-});
+import type { Task, TaskStatus } from '../db/schema'
 
-const createTask = createServerFn({ method: "POST" })
-	.validator((data: { title: string }) => {
-		const title = data.title?.trim();
-		if (!title) throw new Error("Title is required");
-		return { title };
-	})
-	.handler(async ({ data }) => {
-		const [task] = await db
-			.insert(tasks)
-			.values({ title: data.title })
-			.returning();
-		// Hand the slow part to the background worker and return immediately.
-		await enqueue<ProcessTaskPayload>(PROCESS_TASK, { taskId: task.id });
-		return task;
-	});
+// The full database + background-job loop: creating a task inserts a row AND
+// enqueues a pg-boss job (src/functions/tasks.ts). The worker process picks
+// it up, "works" for a few seconds, and marks it done. The query below polls
+// while any task is still in flight, so you can watch the status change.
+export const Route = createFileRoute('/tasks')({
+  loader: () => listTasks(),
+  component: TasksPage,
+})
 
-const tasksQueryKey = ["tasks"] as const;
-
-export const Route = createFileRoute("/tasks")({
-	component: TasksPage,
-	loader: async () => await listTasks(),
-});
-
-const STATUS_STYLES: Record<TaskStatus, string> = {
-	pending:
-		"bg-[rgba(212,160,23,0.14)] text-[#8a6d1a] border-[rgba(212,160,23,0.35)]",
-	processing:
-		"bg-[rgba(79,184,178,0.16)] text-[var(--lagoon-deep)] border-[rgba(79,184,178,0.4)]",
-	done: "bg-[rgba(47,106,74,0.12)] text-[#2f6a4a] border-[rgba(47,106,74,0.3)]",
-};
-
-function StatusChip({ status }: { status: TaskStatus }) {
-	return (
-		<span
-			className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLES[status]}`}
-		>
-			{status === "processing" && (
-				<span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
-			)}
-			{status}
-		</span>
-	);
+const statusVariant: Record<TaskStatus, 'secondary' | 'default' | 'outline'> = {
+  pending: 'outline',
+  processing: 'secondary',
+  done: 'default',
 }
 
 function TasksPage() {
-	const initialTasks = Route.useLoaderData();
-	const queryClient = useQueryClient();
-	const [title, setTitle] = useState("");
+  const initial = Route.useLoaderData()
+  const queryClient = useQueryClient()
+  const [title, setTitle] = useState('')
 
-	const { data: taskList = [] } = useQuery({
-		queryKey: tasksQueryKey,
-		queryFn: () => listTasks(),
-		initialData: initialTasks,
-		// Poll while any task is still being worked on, then go quiet.
-		refetchInterval: (query) =>
-			query.state.data?.some((task: Task) => task.status !== "done")
-				? 1200
-				: false,
-	});
+  const tasksQuery = useQuery({
+    queryKey: ['tasks'],
+    queryFn: () => listTasks(),
+    initialData: initial,
+    // Poll while any task is still being processed by the worker. Keep
+    // polling even when the window is hidden/unfocused — without this the
+    // demo looks frozen if you watch it from a background window.
+    refetchInterval: (query) =>
+      query.state.data?.some((task) => task.status !== 'done') ? 1000 : false,
+    refetchIntervalInBackground: true,
+  })
 
-	const addTask = useMutation({
-		mutationFn: (newTitle: string) => createTask({ data: { title: newTitle } }),
-		onSuccess: () => {
-			setTitle("");
-			queryClient.invalidateQueries({ queryKey: tasksQueryKey });
-		},
-	});
+  const create = useMutation({
+    mutationFn: (newTitle: string) => createTask({ data: { title: newTitle } }),
+    onSuccess: () => {
+      setTitle('')
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    },
+  })
 
-	return (
-		<main className="page-wrap px-4 py-12">
-			<section className="island-shell rounded-2xl p-6 sm:p-8">
-				<p className="island-kicker mb-2">Database + Background Jobs</p>
-				<h1 className="display-title mb-3 text-3xl font-bold text-[var(--sea-ink)] sm:text-4xl">
-					Tasks
-				</h1>
-				<p className="mb-8 max-w-2xl text-sm leading-6 text-[var(--sea-ink-soft)]">
-					Adding a task inserts a row in Postgres (Drizzle) and enqueues a
-					background job (pg-boss). The worker process picks it up, "works" for
-					a few seconds, and marks it done — the list below polls with TanStack
-					Query until everything settles.
-				</p>
+  return (
+    <div className="space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">Tasks</h1>
+        <p className="text-sm text-muted-foreground">
+          Each task is a database row plus a background job. Add one and watch
+          the worker move it from <em>pending</em> → <em>processing</em> →{' '}
+          <em>done</em>. If it never leaves pending, the worker isn&apos;t
+          running (
+          <code className="rounded bg-muted px-1 py-0.5">npm run worker</code>).
+        </p>
+      </div>
 
-				<form
-					className="mb-8 flex flex-col gap-2 sm:flex-row"
-					onSubmit={(event) => {
-						event.preventDefault();
-						if (title.trim() && !addTask.isPending) addTask.mutate(title);
-					}}
-				>
-					<input
-						type="text"
-						value={title}
-						onChange={(event) => setTitle(event.target.value)}
-						placeholder="What needs doing?"
-						className="min-w-0 flex-1 rounded-xl border border-[var(--line)] bg-white/60 px-4 py-2.5 text-sm text-[var(--sea-ink)] outline-none transition focus:border-[rgba(79,184,178,0.6)] dark:bg-white/5"
-					/>
-					<button
-						type="submit"
-						disabled={addTask.isPending || !title.trim()}
-						className="rounded-xl border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-5 py-2.5 text-sm font-semibold text-[var(--lagoon-deep)] transition hover:bg-[rgba(79,184,178,0.24)] disabled:cursor-not-allowed disabled:opacity-50"
-					>
-						{addTask.isPending ? "Adding…" : "Add task"}
-					</button>
-				</form>
+      <form
+        className="flex gap-2"
+        onSubmit={(event) => {
+          event.preventDefault()
+          if (title.trim()) create.mutate(title)
+        }}
+      >
+        <Input
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          placeholder="What needs doing?"
+          aria-label="Task title"
+        />
+        <Button type="submit" disabled={create.isPending || !title.trim()}>
+          {create.isPending ? 'Adding…' : 'Add task'}
+        </Button>
+      </form>
 
-				<ul className="m-0 list-none space-y-2 p-0">
-					{taskList.map((task) => (
-						<li
-							key={task.id}
-							className="flex items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-white/40 px-4 py-3 dark:bg-white/5"
-						>
-							<span className="min-w-0 truncate text-sm font-medium text-[var(--sea-ink)]">
-								{task.title}
-							</span>
-							<StatusChip status={task.status} />
-						</li>
-					))}
-					{taskList.length === 0 && (
-						<li className="rounded-xl border border-dashed border-[var(--line)] px-4 py-8 text-center text-sm text-[var(--sea-ink-soft)]">
-							No tasks yet — add one above to watch the worker process it.
-						</li>
-					)}
-				</ul>
-			</section>
-		</main>
-	);
+      <div className="space-y-2">
+        {tasksQuery.data.length === 0 && (
+          <Card>
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              No tasks yet — add one above.
+            </CardContent>
+          </Card>
+        )}
+        {tasksQuery.data.map((task) => (
+          <TaskRow key={task.id} task={task} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function TaskRow({ task }: { task: Task }) {
+  return (
+    <Card>
+      <CardContent className="flex items-center justify-between gap-4 py-3">
+        <div className="min-w-0">
+          <p className="truncate font-medium">{task.title}</p>
+          <p className="text-xs text-muted-foreground">
+            #{task.id} · created {new Date(task.createdAt).toLocaleTimeString()}
+            {task.completedAt &&
+              ` · completed ${new Date(task.completedAt).toLocaleTimeString()}`}
+          </p>
+        </div>
+        <Badge variant={statusVariant[task.status]}>{task.status}</Badge>
+      </CardContent>
+    </Card>
+  )
 }
