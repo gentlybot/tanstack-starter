@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1783082979169,
-      "tag": "0000_thick_jack_murdock",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1783082990874,
-      "tag": "0001_omniscient_naoko",
+      "when": 1783178242151,
+      "tag": "0000_init",
       "breakpoints": true
     }
   ]

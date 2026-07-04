@@ -1,89 +1,40 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 
-import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../components/ui/card'
+import { APP_DESCRIPTION, APP_NAME } from '../lib/app'
 
+// The launchpad placeholder page. When building an app on this starter,
+// REPLACE this with the app's real landing/home page (and rename the app in
+// src/lib/app.ts) — see "Making it yours" in AGENTS.md.
 export const Route = createFileRoute('/')({ component: Home })
 
-const features = [
-  'TanStack Start (React 19, SSR, file-based routing)',
-  'TanStack Query for client data',
-  'Postgres + Drizzle ORM with SQL migrations',
-  'Background jobs via pg-boss — no Redis needed',
-  'Realtime WebSockets with a standalone ws process',
-  'Tailwind CSS v4 + shadcn/ui components',
-]
-
 function Home() {
+  const { session } = Route.useRouteContext()
+
   return (
-    <div className="space-y-10">
-      <section className="space-y-4">
-        <Badge variant="secondary">Starter template</Badge>
-        <h1 className="text-4xl font-bold tracking-tight">
-          Everything a real app grows into, already wired together.
-        </h1>
-        <p className="max-w-2xl text-lg text-muted-foreground">
-          A full-stack TanStack Start app with a database, migrations,
-          background jobs, and realtime — each core pattern demonstrated exactly
-          once, ready to build on.
+    <div className="flex flex-col items-center gap-6 py-24 text-center">
+      <h1 className="text-4xl font-bold tracking-tight">{APP_NAME}</h1>
+      <p className="max-w-md text-lg text-muted-foreground">
+        {APP_DESCRIPTION}
+      </p>
+      {session?.user ? (
+        <p className="text-sm text-muted-foreground">
+          Signed in as{' '}
+          <span className="font-medium text-foreground">
+            {session.user.email}
+          </span>
+          . Your app goes here.
         </p>
+      ) : (
         <div className="flex gap-3">
           <Button asChild>
-            <Link to="/tasks">Try the tasks demo</Link>
+            <Link to="/signup">Create an account</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link to="/chat">Open the chat demo</Link>
+            <Link to="/login">Sign in</Link>
           </Button>
         </div>
-      </section>
-
-      <section className="grid gap-4 sm:grid-cols-2">
-        <Link to="/tasks" className="group">
-          <Card className="h-full transition-colors group-hover:border-ring">
-            <CardHeader>
-              <CardTitle>Database + background jobs</CardTitle>
-              <CardDescription>
-                A server function inserts a row and enqueues a pg-boss job; the
-                worker processes it while the page polls until it&apos;s done.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-        <Link to="/chat" className="group">
-          <Card className="h-full transition-colors group-hover:border-ring">
-            <CardHeader>
-              <CardTitle>Realtime WebSockets</CardTitle>
-              <CardDescription>
-                Messages broadcast to every open tab over a WebSocket and are
-                saved to Postgres, so history survives a reload.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold">In the box</h2>
-        <ul className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-          {features.map((feature) => (
-            <li key={feature} className="flex items-start gap-2">
-              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
-              {feature}
-            </li>
-          ))}
-        </ul>
-        <p className="text-sm text-muted-foreground">
-          Read <code className="rounded bg-muted px-1.5 py-0.5">AGENTS.md</code>{' '}
-          for the conventions this codebase follows, then start editing{' '}
-          <code className="rounded bg-muted px-1.5 py-0.5">src/routes/</code>.
-        </p>
-      </section>
+      )}
     </div>
   )
 }

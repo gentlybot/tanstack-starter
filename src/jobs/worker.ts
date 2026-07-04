@@ -1,16 +1,21 @@
 // Standalone worker process: `npm run worker`.
 // Registers one handler per queue and waits for jobs. Runs separately from the
-// web server so slow/retryable work never blocks a request.
+// web server so slow/retryable work never blocks a request. Use a job whenever
+// work is slow, retryable, or shouldn't block a request (emails, imports,
+// calls to external APIs) — see docs/recipes/background-jobs.md.
 
 import '../server/load-env'
 
-import { work } from './boss'
-import { processTask } from './handlers/process-task'
-import { PROCESS_TASK } from './queues'
-import type { ProcessTaskPayload } from './queues'
+import { getBoss } from './boss'
 
 async function main() {
-  await work<ProcessTaskPayload>(PROCESS_TASK, processTask)
+  // Connects to Postgres and keeps the process alive.
+  await getBoss()
+
+  // Register handlers here, one line per queue:
+  //
+  // await work<SendWelcomeEmailPayload>(SEND_WELCOME_EMAIL, sendWelcomeEmail)
+
   console.log('[worker] ready — waiting for jobs')
 }
 

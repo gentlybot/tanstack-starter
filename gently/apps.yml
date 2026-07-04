@@ -5,10 +5,18 @@
 tools:
   - nodejs_22
 
-# Runs once per workspace before apps start (repo root).
+# Shared env for setup + every app process.
+env:
+  # Signs better-auth session tokens. Sandbox-internal value; use a real
+  # secret (openssl rand -base64 32) for anything public-facing.
+  BETTER_AUTH_SECRET: gently-sandbox-dev-secret-0123456789abcdef
+
+# Runs once per workspace before apps start (repo root). Must stay idempotent —
+# it reruns on every rebuild/wake.
 setup:
   - npm install
   - npm run db:migrate
+  - npm run db:seed
 
 services:
   postgres:
