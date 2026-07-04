@@ -1,26 +1,31 @@
-# TanStack Starter
+# TanStack Launchpad
 
-A full-stack [TanStack Start](https://tanstack.com/start) starter kit with the
-pieces real apps grow into already wired together:
+A full-stack [TanStack Start](https://tanstack.com/start) template built to be
+**extended by AI agents**: all the infrastructure a real app needs is wired
+and working on first boot, with zero demo content to tear out. Every core
+pattern has one canonical, copyable example — live in the kit or as a
+complete recipe in `docs/recipes/`.
+
+In the box:
 
 - **TanStack Start** — React 19, SSR, file-based routing, server functions
-- **TanStack Query** — client data fetching, caching, and polling
-- **Postgres + Drizzle ORM** — typed schema in `src/db/schema.ts` with real SQL
-  migrations in `drizzle/` (including an example of a later schema change)
-- **Background jobs** — [pg-boss](https://github.com/timgit/pg-boss) queues
-  stored in the same Postgres; no Redis needed
-- **Realtime** — WebSockets via a small standalone `ws` process; a live chat
-  room with presence, proxied same-origin at `/ws`
-- **Tailwind CSS v4 + [shadcn/ui](https://ui.shadcn.com)** — vendored,
-  accessible components with light/dark mode
-- **ESLint + Prettier**, **Vitest**
-- **AGENTS.md** — conventions so AI coding agents use the stack correctly
-
-The `/tasks` page demonstrates the full loop: a server function inserts a row
-and enqueues a job, the worker processes it, and the page polls until it's
-done. The `/chat` page adds a realtime layer: messages broadcast over a
-WebSocket to every open tab and are saved to Postgres so history survives a
-reload.
+- **Auth** — [better-auth](https://better-auth.com) email + password, session
+  in router context, styled login/signup pages, seeded dev account
+- **Postgres + Drizzle ORM** — typed schema, real SQL migrations, idempotent
+  seed script
+- **Forms** — TanStack Form + Zod 4 with pre-styled field components
+- **Background jobs** — [pg-boss](https://github.com/timgit/pg-boss) queues in
+  the same Postgres; no Redis needed
+- **Realtime** — WebSockets via a small standalone `ws` process, same-origin
+  at `/ws`
+- **Tailwind CSS v4 + [shadcn/ui](https://ui.shadcn.com)** — 26 vendored
+  components, semantic tokens, dark mode with a header toggle, Inter
+  (self-hosted)
+- **Error/loading UX** — root error + 404 pages, sonner toasts, skeleton/empty
+  state primitives
+- **Vitest** — wired, with canonical schema + component test examples
+- **AGENTS.md** — the agent guide: conventions, the data-scoping rule, a
+  "making it yours" checklist, and a recipes index
 
 ## Getting started
 
@@ -35,90 +40,63 @@ docker run -d --name tanstack-starter-pg -p 5432:5432 \
 # 2. Configure
 cp .env.example .env
 
-# 3. Install, migrate, run
+# 3. Install, migrate, seed, run
 npm install
 npm run db:migrate
-npm run dev        # web app → http://localhost:3000
-npm run ws         # in a second terminal — realtime WebSocket server
-npm run worker     # in a third terminal — processes background jobs
+npm run db:seed        # dev account: dev@example.com / password1234
+
+npm run dev            # web app        → http://localhost:3000
+npm run ws             # realtime       → ws process on :3001 (separate terminal)
+npm run worker         # background jobs (separate terminal)
 ```
 
-The only required env var is `DATABASE_URL` (see `.env.example`).
+Sign in with the seeded `dev@example.com` / `password1234`, or create an
+account.
 
-### Running on gently
+## Running on gently
 
-`gently/apps.yml` declares everything a gently workspace needs: the Node
-toolchain, the Postgres service (which injects `DATABASE_URL`), and all three
-processes (`web` + `ws` + `worker`). Create a project from this template and
-it runs with no extra setup.
+`gently/apps.yml` declares everything: the Postgres service (with
+`DATABASE_URL` injection), the three processes (web / ws / worker), the auth
+secret, and setup (`npm install`, migrate, seed). Opening the project in a
+gently sandbox boots the full stack with a signed-in-ready app — no manual
+steps.
 
 ## Project structure
 
 ```
 src/
-  routes/                  file-based routes (pages AND endpoints)
-    __root.tsx               document shell + layout (header, main)
-    index.tsx                /         landing page
-    tasks.tsx                /tasks    db + jobs + polling demo
-    chat.tsx                 /chat     realtime WebSocket chat demo
-    about.tsx                /about    the stack at a glance
-    api/health.ts            GET /api/health — a raw server route
-  functions/
-    tasks.ts                 server functions (typed client↔server RPC)
-  components/
-    Header.tsx               nav
-    ChatRoom.tsx             WebSocket chat client
-    ui/                      shadcn/ui components (vendored — edit freely)
-  db/
-    schema.ts                Drizzle schema — single source of truth
-    index.ts                 shared db client (web + worker + ws)
-  jobs/
-    queues.ts                queue names + payload types
-    handlers/                one file per job
-    worker.ts                worker entry (npm run worker)
-    boss.ts                  pg-boss setup, enqueue() + work() helpers
-  ws/
-    server.ts                standalone WebSocket server (npm run ws)
-  server/load-env.ts         dotenv for the standalone processes
-drizzle/                   generated SQL migrations — committed
-gently/apps.yml            gently workspace runtime config
-AGENTS.md                  conventions for humans and AI agents
-drizzle.config.ts          drizzle-kit config (points at src/db/schema.ts)
+  routes/            # file-based pages + server routes (api/…)
+  functions/         # server functions (typed client↔server RPC)
+  components/        # Header, form fields, PageHeader, EmptyState, theme
+  components/ui/     # vendored shadcn/ui components
+  db/                # Drizzle client + schema (source of truth)
+  jobs/              # pg-boss: queues, worker, handlers
+  ws/                # standalone WebSocket server
+  lib/               # app identity, auth, seo, utils
+  scripts/           # seed
+docs/recipes/        # complete, verified patterns to copy (CRUD, forms, …)
+drizzle/             # generated SQL migrations (committed)
+gently/apps.yml      # gently runtime config
 ```
 
-## Why a standalone WebSocket process?
+## Extending the app
 
-TanStack Start has no built-in WebSocket support, so realtime runs as its own
-small Node process (`src/ws/server.ts`) — the same pattern as the background
-worker. Clients always connect **same-origin at `/ws`**: in dev, Vite proxies
-it (see `vite.config.ts`); on gently, `gently/apps.yml` wires it; anywhere
-else, point your reverse proxy's `/ws` at the ws port. This survives framework
-churn and scales independently of the web server.
-
-## Common tasks
-
-| Task                  | How                                                                                     |
-| --------------------- | --------------------------------------------------------------------------------------- |
-| Add a page            | New file in `src/routes/`, link it from `src/components/Header.tsx`                     |
-| Add a server function | Add to `src/functions/`, call it from components via TanStack Query                     |
-| Change the schema     | Edit `src/db/schema.ts`, `npm run db:generate`, `npm run db:migrate`, commit `drizzle/` |
-| Add a background job  | Queue in `src/jobs/queues.ts`, handler in `src/jobs/handlers/`, register in `worker.ts` |
-| Add a realtime event  | Extend the JSON protocol in `src/ws/server.ts` + `ChatRoom.tsx`                         |
-| Add a UI component    | `npx shadcn@latest add <name>`                                                          |
-
-See `AGENTS.md` for the conventions this codebase follows — useful for humans
-and required reading for AI agents.
+**Read [AGENTS.md](./AGENTS.md) first** — it's the guide this codebase is
+built around: the first-prompt checklist, the auth/data-scoping rule, core
+conventions, and a recipe index for CRUD, forms, background jobs, realtime,
+uploads, email, and SEO.
 
 ## Scripts
 
-| Script                               | What it does                                 |
-| ------------------------------------ | -------------------------------------------- |
-| `npm run dev`                        | web app on port 3000                         |
-| `npm run ws`                         | realtime WebSocket server on port 3001       |
-| `npm run worker`                     | background job worker (watch mode)           |
-| `npm run db:generate`                | generate a SQL migration from schema changes |
-| `npm run db:migrate`                 | apply pending migrations                     |
-| `npm run db:studio`                  | Drizzle Studio (database browser)            |
-| `npm run lint` / `npm run typecheck` | ESLint / `tsc --noEmit`                      |
-| `npm run test`                       | Vitest                                       |
-| `npm run build` / `npm run preview`  | production build / preview                   |
+| Script                | What it does                               |
+| --------------------- | ------------------------------------------ |
+| `npm run dev`         | Web app on :3000                           |
+| `npm run ws`          | WebSocket server on :3001                  |
+| `npm run worker`      | Background job worker                      |
+| `npm run db:generate` | Generate SQL migration from schema changes |
+| `npm run db:migrate`  | Apply pending migrations                   |
+| `npm run db:seed`     | Idempotent dev data                        |
+| `npm run db:studio`   | Drizzle Studio                             |
+| `npm run check`       | prettier + typecheck + lint + tests        |
+| `npm run test`        | Vitest                                     |
+| `npm run build`       | Production build                           |

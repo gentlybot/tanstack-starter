@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import { devtools } from '@tanstack/devtools-vite'
 
@@ -31,6 +32,14 @@ const config = defineConfig({
     proxy: {
       '/ws': { target: 'http://localhost:3001', ws: true },
     },
+  },
+  test: {
+    // Fast default for schema/pure-function tests. Component tests opt into
+    // the DOM per-file with a `// @vitest-environment jsdom` pragma.
+    environment: 'node',
+    // Required for @testing-library/react's automatic between-test cleanup
+    // (it registers afterEach(cleanup) only when a global afterEach exists).
+    globals: true,
   },
 })
 

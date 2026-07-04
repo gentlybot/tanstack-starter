@@ -1,108 +1,191 @@
-# TanStack Starter — Agent Guide
+# Agent Guide
 
-Full-stack TanStack Start app with Postgres, background jobs, and realtime
-WebSockets pre-wired, built on Tailwind + shadcn/ui. Every core pattern is
-demonstrated exactly once; extend by copying the existing example of whatever
-you're adding.
+Full-stack TanStack Start app with auth, Postgres, background jobs, and
+realtime WebSockets pre-wired, built on Tailwind + shadcn/ui. This codebase
+starts as a **launchpad**: all infrastructure is wired and working, nothing is
+app-specific yet. Every core pattern has exactly one canonical example —
+either live in the kit or as a complete recipe in `docs/recipes/` — and you
+extend the app by copying it.
+
+## Making it yours (first-prompt checklist)
+
+When building a new app on this launchpad, do this before anything else:
+
+1. Set the app's name and description in `src/lib/app.ts` — it drives the
+   document title, the header brand, and the auth pages.
+2. Replace the placeholder landing page `src/routes/index.tsx` with the app's
+   real home page. The landing page IS the app — don't build a separate
+   "welcome" screen.
+3. Match `public/manifest.json`'s name fields to the app name.
+4. Build the first feature — usually `docs/recipes/crud.md`.
 
 ## Stack
 
-| Concern         | Choice                                                | Where                                             |
-| --------------- | ----------------------------------------------------- | ------------------------------------------------- |
-| Framework       | TanStack Start (React 19, SSR, Vite)                  | `src/routes/`, `vite.config.ts`                   |
-| Routing         | TanStack Router, file-based                           | `src/routes/`                                     |
-| Server RPC      | Server functions (`createServerFn`)                   | `src/functions/tasks.ts`                          |
-| HTTP endpoints  | Server routes (`server.handlers`)                     | `src/routes/api/health.ts`                        |
-| Client data     | TanStack Query                                        | `src/routes/tasks.tsx`                            |
-| Database        | Postgres + Drizzle ORM, SQL migrations                | `src/db/`, `drizzle/`                             |
-| Background jobs | pg-boss (queues live in Postgres)                     | `src/jobs/`                                       |
-| Realtime        | WebSockets — standalone `ws` process                  | `src/ws/server.ts`, `src/components/ChatRoom.tsx` |
-| UI components   | shadcn/ui (vendored into the repo)                    | `src/components/ui/`                              |
-| Styling         | Tailwind CSS v4, shadcn tokens, dark mode via `.dark` | `src/styles.css`                                  |
-| Lint/format     | ESLint + Prettier                                     | `eslint.config.js`, `prettier.config.js`          |
+| Concern         | Choice                                                | Where                                        |
+| --------------- | ----------------------------------------------------- | -------------------------------------------- |
+| Framework       | TanStack Start (React 19, SSR, Vite)                  | `src/routes/`, `vite.config.ts`              |
+| Routing         | TanStack Router, file-based                           | `src/routes/`                                |
+| Auth            | better-auth (email + password), sessions in Postgres  | `src/lib/auth*.ts`, `src/routes/login.tsx`   |
+| Server RPC      | Server functions (`createServerFn`)                   | `src/functions/`                             |
+| HTTP endpoints  | Server routes (`server.handlers`)                     | `src/routes/api/health.ts`                   |
+| Client data     | TanStack Query + route loaders                        | `src/routes/`                                |
+| Forms           | TanStack Form + Zod 4, pre-styled fields              | `src/components/form.tsx`                    |
+| Database        | Postgres + Drizzle ORM, SQL migrations                | `src/db/`, `drizzle/`                        |
+| Background jobs | pg-boss (queues live in Postgres)                     | `src/jobs/`                                  |
+| Realtime        | WebSockets — standalone `ws` process                  | `src/ws/server.ts`                           |
+| UI components   | shadcn/ui, 26 components vendored into the repo       | `src/components/ui/`                         |
+| Styling         | Tailwind CSS v4, shadcn tokens, dark mode via `.dark` | `src/styles.css`, `src/components/theme.tsx` |
+| Toasts          | sonner (`toast.success(…)` / `toast.error(…)`)        | mounted in `src/routes/__root.tsx`           |
+| Lint/format     | ESLint + Prettier                                     | `eslint.config.js`, `prettier.config.js`     |
 
 ## Commands
 
 ```bash
-npm run dev        # web app on :3000 (Vite + TanStack Start)
-npm run ws         # realtime WebSocket server on :3001 (separate process)
-npm run worker     # background job worker (separate process)
+npm run dev         # web app on :3000 (Vite + TanStack Start)
+npm run ws          # realtime WebSocket server on :3001 (separate process)
+npm run worker      # background job worker (separate process)
 npm run db:generate # generate a SQL migration from schema.ts changes
 npm run db:migrate  # apply pending migrations
+npm run db:seed     # idempotent dev data (dev@example.com / password1234)
 npm run db:studio   # Drizzle Studio (database browser)
-npm run lint       # ESLint
-npm run typecheck  # tsc --noEmit
-npm run test       # vitest
-npm run build      # production build
+npm run check       # prettier + typecheck + lint + tests — run before done
+npm run test        # vitest only
+npm run build       # production build
 ```
 
 `DATABASE_URL` must point at Postgres (see `.env.example`). On gently the web
-process, the ws server, the worker, the database, and env injection are all
-declared in `gently/apps.yml`.
+process, the ws server, the worker, the database, env injection, and the seed
+are all declared in `gently/apps.yml`.
+
+## Auth & user data — the most important rule
+
+Auth works out of the box: sign-up/sign-in pages, sessions, and a seeded dev
+account (`dev@example.com` / `password1234`). The root route puts the session
+into router context, so every route can read `context.session`.
+
+**Every server function that reads or writes user-owned data must call
+`requireUser()` (from `src/lib/auth-server.ts`) first and filter every query
+by `user.id`.** No exceptions — route guards protect pages, not data; the
+server function is the security boundary. The canonical shape:
+
+```ts
+export const listPosts = createServerFn({ method: 'GET' }).handler(async () => {
+  const user = await requireUser()
+  return db.select().from(posts).where(eq(posts.userId, user.id))
+})
+```
+
+- User-owned tables reference `user.id` (`userId: text('user_id').notNull()
+.references(() => user.id, { onDelete: 'cascade' })`).
+- Protected PAGES live under the pathless layout `src/routes/_authed.tsx`
+  (create it with your first protected page — `docs/recipes/crud.md` shows it;
+  it redirects to `/login` when signed out).
+- After `authClient.signIn/signUp/signOut(…)` calls, run
+  `router.invalidate()` so the session in context refreshes.
 
 ## Core rules
 
-- **Pages are files** under `src/routes/`. `tasks.tsx` → `/tasks`, `$id.tsx` →
-  path param, `api/health.ts` → `/api/health`. After adding/renaming a route
-  file the route tree regenerates on dev-server start (or `npm run
-generate-routes`); never edit `src/routeTree.gen.ts` by hand. Add a nav link
-  in `src/components/Header.tsx`.
+- **Pages are files** under `src/routes/`. `posts.tsx` → `/posts`,
+  `_authed.posts.$postId.tsx` → protected `/posts/:postId`, `api/health.ts` →
+  `/api/health`. After adding/renaming a route file run
+  `npm run generate-routes` (or let the dev server do it); never edit
+  `src/routeTree.gen.ts` by hand. Add a nav link in
+  `src/components/Header.tsx`.
 - **Client↔server calls use server functions** (`createServerFn` in
-  `src/functions/`), not hand-rolled fetch + JSON endpoints. Server function
-  implementations are stripped from the client bundle, so importing them from
-  components is safe. Wrap them in TanStack Query (`useQuery`/`useMutation`)
-  for caching, polling, and invalidation — see `src/routes/tasks.tsx`.
-- **Server routes** (a `server.handlers` block in a route file) are only for
-  endpoints called from OUTSIDE the app: webhooks, health checks, raw HTTP.
-  See `src/routes/api/health.ts`.
+  `src/functions/`), never hand-rolled fetch + JSON endpoints. Validate input
+  with `.validator(zodSchema)` — pass the Zod schema directly, and share the
+  same schema with the form. Server routes (`server.handlers`) are only for
+  endpoints called from OUTSIDE the app (webhooks, health checks) or raw
+  HTTP/binary (file uploads).
 - **Schema is the source of truth, migrations are the history.** Change
-  `src/db/schema.ts`, then `npm run db:generate` (writes SQL into `drizzle/`)
-  and `npm run db:migrate` (applies it). Commit the generated files in
-  `drizzle/` — `drizzle/0001_*.sql` is an example of a later schema change.
-  Don't hand-write SQL migrations; don't use `db:push` (it bypasses migration
-  history). Share row types with the client via
-  `import type { Task } from '../db/schema'` — `import type` is erased, so no
-  server code leaks into the browser.
-- **Build UI from the shadcn/ui components** in `src/components/ui/`
-  (`Button`, `Card`, `Input`, `Badge`, …). Add more with
-  `npx shadcn@latest add <component>` — they're vendored source files, edit
-  them freely. Use the semantic token classes (`bg-background`,
-  `text-muted-foreground`, `border`, `bg-accent`) so light and dark mode both
-  work — never hardcoded hex colors.
-- **Server-only code never reaches the client.** `src/db`, `src/jobs`, and
-  `src/ws` must only be imported from server function handlers, server routes,
-  or the standalone processes — never directly from components.
-- Run `npm run lint` and `npm run typecheck` before considering a change done.
+  `src/db/schema.ts`, then `npm run db:generate` + `npm run db:migrate`, and
+  commit the generated files in `drizzle/`. Don't hand-write SQL migrations;
+  don't use `db:push`. Share row types via `import type { Post } from
+'../db/schema'`. Never remove the auth tables.
+- **Forms use `useAppForm`** from `src/components/form.tsx` — one Zod schema
+  in `validators.onSubmit` (the same one the server function validates),
+  pre-styled `field.TextField` / `field.TextareaField` / `field.CheckboxField`
+  and `form.SubmitButton`. `src/routes/login.tsx` is the live example;
+  `docs/recipes/forms.md` has the full pattern.
+- **Build UI from the vendored shadcn/ui components** in
+  `src/components/ui/`, plus `PageHeader` and `EmptyState` from
+  `src/components/`. Add more with `npx shadcn@latest add <component>`.
+- **Server-only code never reaches the client.** `src/db`, `src/jobs`,
+  `src/ws`, and `src/lib/auth.ts` may only be imported from server function
+  handlers, server routes, or the standalone processes — never directly from
+  components (`import type` is fine). Only `createServerFn` handler bodies
+  are stripped from the client bundle automatically — a plain exported helper
+  that touches those modules must be wrapped in `createServerOnlyFn` (see
+  `requireUser` in `src/lib/auth-server.ts`), or it drags Postgres into the
+  browser and crashes hydration.
+- **Every mutation handles failure**: `toast.error(...)` on error,
+  `toast.success(...)` + `router.invalidate()` on success. Route-level
+  failures render the root `errorComponent`/`notFoundComponent` (already
+  wired in `__root.tsx`) — throw, don't swallow.
+- Lint gotcha: `@typescript-eslint/no-unnecessary-condition` rejects
+  `const [row] = await db.select()…; if (!row)` (Drizzle rows aren't typed
+  `| undefined`). Check `rows.length === 0` before destructuring instead —
+  see `src/scripts/seed.ts`.
+- Run `npm run check` before considering a change done.
 
-## How to add things (copy the existing example)
+## How to add things
 
-- **A page**: new file in `src/routes/`, add a link in
-  `src/components/Header.tsx`. Load data with a route `loader` + server
-  function (see `src/routes/tasks.tsx`).
-- **A server function**: add it to a file in `src/functions/`. Use
-  `.validator()` for input and query Postgres via `db` from `src/db`.
-- **A table**: add it to `src/db/schema.ts`, export inferred types, run
-  `npm run db:generate` then `npm run db:migrate`, and commit the new file in
-  `drizzle/`.
-- **A background job**: queue name + payload type in `src/jobs/queues.ts`,
-  handler in `src/jobs/handlers/`, register it in `src/jobs/worker.ts`, and
-  `enqueue()` it from a server function (see `process-task` and
-  `src/functions/tasks.ts`). Use a job whenever work is slow, retryable, or
-  shouldn't block a request (emails, imports, external APIs).
-- **A realtime feature**: extend the event types in `src/ws/server.ts` (add a
-  `type` to the JSON protocol) and handle it in the client component (see
-  `src/components/ChatRoom.tsx`). Clients always connect same-origin to `/ws`;
-  the Vite proxy (dev) or gently/apps.yml routes it to the ws process. Persist
-  anything that should survive a reload to Postgres, like the chat does.
-- **A shadcn component**: `npx shadcn@latest add <name>`, then import from
-  `src/components/ui/`.
+Live canonical examples in the kit:
+
+| Pattern            | Copy from                                        |
+| ------------------ | ------------------------------------------------ |
+| Form page          | `src/routes/login.tsx`                           |
+| Server route (raw) | `src/routes/api/health.ts`                       |
+| Head/meta per page | `seo()` in any route's `head` (`src/lib/seo.ts`) |
+| Schema test        | `src/lib/auth-schemas.test.ts`                   |
+| Component test     | `src/components/form.test.tsx`                   |
+
+Complete recipes (full files, verified — follow them step by step):
+
+| I need to…                                   | Recipe                            |
+| -------------------------------------------- | --------------------------------- |
+| Add a collection users create/edit/delete    | `docs/recipes/crud.md`            |
+| Build any form                               | `docs/recipes/forms.md`           |
+| Run slow/retryable work off the request path | `docs/recipes/background-jobs.md` |
+| Push live updates to open pages              | `docs/recipes/realtime.md`        |
+| Accept file/image uploads                    | `docs/recipes/file-uploads.md`    |
+| Send email                                   | `docs/recipes/email.md`           |
+| Set titles/descriptions/social cards         | `docs/recipes/seo.md`             |
+
+## Design bar
+
+The user never sees code — only the pages. Make them look deliberate:
+
+- Use the semantic token classes (`bg-background`, `text-muted-foreground`,
+  `border`, `bg-accent`) exclusively; never hardcoded hex colors. Both themes
+  must look right — there's a visible dark-mode toggle in the header.
+- Every list has an `EmptyState` (with the create action), every page starts
+  with `PageHeader`, loading uses `Skeleton` components — no blank screens,
+  no bare "no data" text, no layout jumps.
+- Destructive actions get an `AlertDialog` confirm. Async buttons show their
+  pending state (SubmitButton does this for you).
+- Prefer restraint: the shadcn defaults, the existing spacing scale
+  (`space-y-6`, `gap-4`), and the type scale already in use. Don't invent new
+  visual styles per page.
+
+## Testing
+
+Vitest is wired (`npm run test`). Two canonical examples to copy:
+`src/lib/auth-schemas.test.ts` (pure function / Zod schema test) and
+`src/components/form.test.tsx` (component test — note the
+`// @vitest-environment jsdom` pragma). Test what breaks silently: schema
+edge cases, scoping/permission logic, tricky pure functions. Don't chase
+coverage on page components.
 
 ## Environment
 
-- `.env` (gitignored) for local dev; `.env.example` documents the keys. Only
-  `DATABASE_URL` is required. TanStack Start/Vite loads `.env` for the web
-  process; the standalone worker and ws processes load it via
-  `src/server/load-env.ts` (dotenv). On gently, env comes from
-  `gently/apps.yml` and those files are a harmless no-op.
+- `.env` (gitignored) for local dev; `.env.example` documents every key. Only
+  `DATABASE_URL` and `BETTER_AUTH_SECRET` matter out of the box. The web
+  process loads `.env` via Vite; worker and ws load it via
+  `src/server/load-env.ts`. On gently, env comes from `gently/apps.yml`
+  (services' `connectionEnv` + the `env:` block) and the `.env` files are a
+  harmless no-op.
 - Secrets stay server-side. Only `VITE_`-prefixed variables reach the browser
-  (`import.meta.env.VITE_*`).
+  (`import.meta.env.VITE_*`). New third-party keys: add to `.env.example`
+  (documented), `.env` (local value), and `gently/apps.yml` `env:` (sandbox
+  value).

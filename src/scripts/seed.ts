@@ -33,7 +33,9 @@ async function main() {
     console.log(`[seed] ${DEV_USER.email} already exists — nothing to do`)
   } else {
     await auth.api.signUpEmail({ body: DEV_USER })
-    console.log(`[seed] created ${DEV_USER.email} (password: ${DEV_USER.password})`)
+    console.log(
+      `[seed] created ${DEV_USER.email} (password: ${DEV_USER.password})`,
+    )
   }
 
   // ── App seed data goes below ──────────────────────────────────────────────

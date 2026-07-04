@@ -1,10 +1,4 @@
-import {
-  boolean,
-  index,
-  pgTable,
-  text,
-  timestamp,
-} from 'drizzle-orm/pg-core'
+import { boolean, index, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 // The database schema is the single source of truth. Change it here, then run
 // `npm run db:generate` to produce a SQL migration in drizzle/ and

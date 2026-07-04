@@ -20,16 +20,18 @@ export function seo({
   const fullTitle = title ? `${title} · ${APP_NAME}` : APP_NAME
   return [
     { title: fullTitle },
-    { name: 'og:title', content: fullTitle },
+    // Open Graph tags use `property` (per the OG spec); plain meta and
+    // twitter tags use `name`.
+    { property: 'og:title', content: fullTitle },
     ...(description
       ? [
           { name: 'description', content: description },
-          { name: 'og:description', content: description },
+          { property: 'og:description', content: description },
         ]
       : []),
     ...(image
       ? [
-          { name: 'og:image', content: image },
+          { property: 'og:image', content: image },
           { name: 'twitter:card', content: 'summary_large_image' },
         ]
       : []),
