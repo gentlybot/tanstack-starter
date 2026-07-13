@@ -5,7 +5,7 @@ feeds, presence, notifications, collaborative UI. Realtime runs as a
 standalone WebSocket process (`src/ws/server.ts`, `npm run ws`) because
 TanStack Start has no built-in WebSocket support. Clients always connect to
 the SAME ORIGIN at `/ws`: in dev the Vite proxy forwards it to :3001
-(`vite.config.ts`), on gently `gently/apps.yml` runs the `ws` app — both are
+(`vite.config.ts`), on Gently the template runtime runs the `ws` app — both are
 already wired, nothing to add. Realtime is the transport, the database is the
 truth: persist anything that must survive a reload to Postgres. Worked example
 below: a live activity feed (room-less broadcast messages).
@@ -20,7 +20,7 @@ below: a live activity feed (room-less broadcast messages).
 // TanStack Start has no built-in WebSocket support, so realtime runs as its
 // own small process — same pattern as the background worker. Clients always
 // connect to the SAME ORIGIN at /ws: in dev, Vite proxies /ws here (see
-// vite.config.ts); on gently, gently/apps.yml routes /ws to this process; in
+// vite.config.ts); on Gently, the template runtime routes /ws here; in
 // any other production setup, point your reverse proxy's /ws at this port.
 //
 // Protocol: JSON frames tagged by `type`. The server tracks presence and
@@ -135,7 +135,7 @@ broadcast({ type: 'activity', ...row })
 import { useEffect, useRef, useState } from 'react'
 
 // Generic client for the standalone WebSocket server (src/ws/server.ts).
-// Connects to the SAME ORIGIN at /ws (Vite proxy in dev, gently/apps.yml in
+// Connects to the SAME ORIGIN at /ws (Vite proxy in dev, template runtime in
 // sandboxes), parses JSON frames, auto-reconnects 2s after a drop, and cleans
 // up on unmount. Type it with the event unions from the server:
 //

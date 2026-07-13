@@ -55,7 +55,7 @@ npm run build       # production build
 
 `DATABASE_URL` must point at Postgres (see `.env.example`). On gently the web
 process, the ws server, the worker, the database, env injection, and the seed
-are all declared in `gently/apps.yml`.
+are all declared by the externally managed Gently template runtime config.
 
 ## Auth & user data — the most important rule
 
@@ -182,10 +182,10 @@ coverage on page components.
 - `.env` (gitignored) for local dev; `.env.example` documents every key. Only
   `DATABASE_URL` and `BETTER_AUTH_SECRET` matter out of the box. The web
   process loads `.env` via Vite; worker and ws load it via
-  `src/server/load-env.ts`. On gently, env comes from `gently/apps.yml`
+  `src/server/load-env.ts`. On Gently, env comes from the template runtime config
   (services' `connectionEnv` + the `env:` block) and the `.env` files are a
   harmless no-op.
 - Secrets stay server-side. Only `VITE_`-prefixed variables reach the browser
   (`import.meta.env.VITE_*`). New third-party keys: add to `.env.example`
-  (documented), `.env` (local value), and `gently/apps.yml` `env:` (sandbox
-  value).
+  (documented), `.env` (local value), and the Gently template runtime `env:`
+  block (sandbox value).

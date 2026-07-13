@@ -7,6 +7,10 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+const allowedHosts = process.env.VITE_ALLOWED_HOSTS?.split(',')
+  .map((host) => host.trim())
+  .filter(Boolean)
+
 const config = defineConfig({
   resolve: {
     tsconfigPaths: true,
@@ -21,11 +25,10 @@ const config = defineConfig({
   },
   plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
   server: {
-    // Bind all interfaces and accept any Host header so the dev server works
-    // behind proxies/sandboxes (gently, containers, tunnels) as well as
-    // localhost.
+    // Bind all interfaces and allow only the proxy/sandbox hosts supplied by
+    // the runtime. Undefined preserves Vite's safe localhost defaults.
     host: '0.0.0.0',
-    allowedHosts: true,
+    allowedHosts: allowedHosts?.length ? allowedHosts : undefined,
     // Realtime lives in the standalone ws process (src/ws/server.ts). The
     // client always connects same-origin to /ws; in dev this proxy forwards
     // the upgrade to that process. Keep the port in sync with WS_PORT.

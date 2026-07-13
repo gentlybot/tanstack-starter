@@ -55,7 +55,8 @@ account.
 
 ## Running on gently
 
-`gently/apps.yml` declares everything: the Postgres service (with
+The Gently template's externally managed runtime configuration declares
+everything: the Postgres service (with
 `DATABASE_URL` injection), the three processes (web / ws / worker), the auth
 secret, and setup (`npm install`, migrate, seed). Opening the project in a
 gently sandbox boots the full stack with a signed-in-ready app — no manual
@@ -76,7 +77,6 @@ src/
   scripts/           # seed
 docs/recipes/        # complete, verified patterns to copy (CRUD, forms, …)
 drizzle/             # generated SQL migrations (committed)
-gently/apps.yml      # gently runtime config
 ```
 
 ## Extending the app

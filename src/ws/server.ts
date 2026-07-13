@@ -3,7 +3,7 @@
 // TanStack Start has no built-in WebSocket support, so realtime runs as its
 // own small process — same pattern as the background worker. Clients always
 // connect to the SAME ORIGIN at /ws: in dev, Vite proxies /ws here (see
-// vite.config.ts); on gently, gently/apps.yml routes /ws to this process; in
+// vite.config.ts); on Gently, the template runtime routes /ws here; in
 // any other production setup, point your reverse proxy's /ws at this port.
 //
 // This is a ready skeleton: it tracks presence and gives you `broadcast()`.

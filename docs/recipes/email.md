@@ -65,8 +65,8 @@ export async function sendEmail({
 
 ## 2. Add the env variables
 
-Secrets stay server-side: `.env` locally, the `env:` block in
-`gently/apps.yml` on gently. Leave both unset until you actually want mail
+Secrets stay server-side: `.env` locally, the template runtime `env:` block on
+Gently. Leave both unset until you actually want mail
 delivered.
 
 Add to the end of **`.env.example`**:
@@ -82,7 +82,7 @@ Add to the end of **`.env.example`**:
 # EMAIL_FROM=My App <hello@yourdomain.com>
 ```
 
-And the shared `env:` block in **`gently/apps.yml`** becomes:
+And the shared `env:` block in the **Gently template runtime config** becomes:
 
 ```yaml
 # Shared env for setup + every app process.

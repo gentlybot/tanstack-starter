@@ -5,8 +5,8 @@ emails, imports, calls to external APIs, report generation. The web process
 enqueues; a separate worker process (`npm run worker`) executes. Queues live in
 Postgres via pg-boss (a `pgboss` schema in the same database — no Redis, no
 broker), and a handler that throws marks the job failed so pg-boss retries it
-automatically. On gently the worker is already declared as the `worker` app in
-`gently/apps.yml` — nothing to add there. Worked example below:
+automatically. On Gently the worker is already declared as the `worker` app in
+the template runtime — nothing to add there. Worked example below:
 `send-welcome-email`, enqueued from a server function.
 
 ## 1. Declare the queue name and payload type
