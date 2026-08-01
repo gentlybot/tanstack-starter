@@ -1,8 +1,11 @@
 // The app's identity — the single place to rename the app.
 // Used by the document title (__root.tsx), the header brand, and auth pages.
-// When building a new app on this launchpad, change these first.
+//
+// These are deliberate placeholders: the user sees them in a live preview
+// while the app is being built. Change them FIRST, as soon as you know what
+// the app is, and match public/manifest.json to them.
 
-export const APP_NAME = 'My App'
+export const APP_NAME = 'Fresh Paint'
 
 export const APP_DESCRIPTION =
-  'A full-stack app with auth, database, jobs, and realtime built in.'
+  'Brand new and still drying — this app is being built right now.'

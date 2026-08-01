@@ -23,13 +23,16 @@ zero app content. Do this, in this order — no inspection pass needed:
 
 1. **Name it** — `src/lib/app.ts` (`APP_NAME`, `APP_DESCRIPTION`) and the
    `short_name` / `name` fields in `public/manifest.json`. This drives the
-   document title, the header brand, and the auth pages.
+   document title, the header brand, and the auth pages. It currently reads
+   **"Fresh Paint"**, a placeholder the user can see in their live preview —
+   do this first, before anything else.
 2. **Set the look and feel** — edit the token values in `src/styles.css`
    (§4). This is the only file that needs to change to re-theme the entire
    app; every component reads the tokens.
 3. **Replace the home page** — `src/routes/index.tsx` currently renders a
-   "building your app" placeholder. Overwrite it with the app's real landing
-   page. The landing page IS the app; don't build a separate welcome screen.
+   "your app is being built" placeholder that the user is watching live.
+   Overwrite it with the app's real landing page. The landing page IS the
+   app; don't build a separate welcome screen.
 4. **Model the data** — add tables to `src/db/schema.ts` under the
    `App tables go below` marker, then run `npm run db:generate` and
    `npm run db:migrate`, and commit the files drizzle writes into `drizzle/`.

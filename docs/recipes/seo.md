@@ -119,10 +119,10 @@ npm run dev
 
 ```sh
 curl -s http://localhost:3000/login | grep -o '<title>[^<]*</title>'
-# <title>Sign in · My App</title>
+# <title>Sign in · Fresh Paint</title>
 
 curl -s http://localhost:3000/posts/hello-world | grep -o '<title>[^<]*</title>'
-# <title>Hello World · My App</title>
+# <title>Hello World · Fresh Paint</title>
 
 curl -s http://localhost:3000/ | grep -o 'property="og:[a-z:]*"' | sort -u
 # property="og:description"

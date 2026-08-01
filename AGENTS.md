@@ -20,8 +20,10 @@ extend the app by copying it.
 When building a new app on this launchpad, do this before anything else:
 
 1. Set the app's name and description in `src/lib/app.ts` — it drives the
-   document title, the header brand, and the auth pages. Match
-   `public/manifest.json`'s `short_name`/`name` to it.
+   document title, the header brand, and the auth pages. It ships as the
+   placeholder "Fresh Paint", which the user can see in their live preview,
+   so rename it first. Match `public/manifest.json`'s `short_name`/`name`
+   to it.
 2. Set the look and feel by editing the design tokens in `src/styles.css` —
    the one file that re-themes the whole app (see CONTEXT.md §4).
 3. Replace `src/routes/index.tsx` with the app's real home page. It currently
