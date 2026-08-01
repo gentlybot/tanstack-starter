@@ -24,7 +24,7 @@ zero app content. Do this, in this order — no inspection pass needed:
 1. **Name it** — `src/lib/app.ts` (`APP_NAME`, `APP_DESCRIPTION`) and the
    `short_name` / `name` fields in `public/manifest.json`. This drives the
    document title, the header brand, and the auth pages. It currently reads
-   **"Fresh Paint"**, a placeholder the user can see in their live preview —
+   **"Work In Progress"**, a placeholder the user can see in their live preview —
    do this first, before anything else.
 2. **Set the look and feel** — edit the token values in `src/styles.css`
    (§4). This is the only file that needs to change to re-theme the entire

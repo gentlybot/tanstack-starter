@@ -5,7 +5,7 @@
 // while the app is being built. Change them FIRST, as soon as you know what
 // the app is, and match public/manifest.json to them.
 
-export const APP_NAME = 'Fresh Paint'
+export const APP_NAME = 'Work In Progress'
 
 export const APP_DESCRIPTION =
-  'Brand new and still drying — this app is being built right now.'
+  'Not finished yet — this app is being built right now.'

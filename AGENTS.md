@@ -21,7 +21,7 @@ When building a new app on this launchpad, do this before anything else:
 
 1. Set the app's name and description in `src/lib/app.ts` — it drives the
    document title, the header brand, and the auth pages. It ships as the
-   placeholder "Fresh Paint", which the user can see in their live preview,
+   placeholder "Work In Progress", which the user can see in their live preview,
    so rename it first. Match `public/manifest.json`'s `short_name`/`name`
    to it.
 2. Set the look and feel by editing the design tokens in `src/styles.css` —
