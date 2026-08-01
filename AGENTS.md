@@ -1,5 +1,13 @@
 # Agent Guide
 
+> **Read [CONTEXT.md](./CONTEXT.md) first — then start building.** It is the
+> committed repo map: the complete file inventory, the design tokens, every
+> component's API, the database schema, the installed dependencies, and the
+> first-prompt plan, all pre-computed. Together with this file it replaces the
+> exploration pass — you don't need to glob the tree or read `package.json`,
+> `styles.css`, `schema.ts`, `__root.tsx`, the `ui/` components, or the auth
+> files to get oriented. Open a file when you're about to change it.
+
 Full-stack TanStack Start app with auth, Postgres, background jobs, and
 realtime WebSockets pre-wired, built on Tailwind + shadcn/ui. This codebase
 starts as a **launchpad**: all infrastructure is wired and working, nothing is
@@ -12,12 +20,17 @@ extend the app by copying it.
 When building a new app on this launchpad, do this before anything else:
 
 1. Set the app's name and description in `src/lib/app.ts` — it drives the
-   document title, the header brand, and the auth pages.
-2. Replace the placeholder landing page `src/routes/index.tsx` with the app's
-   real home page. The landing page IS the app — don't build a separate
-   "welcome" screen.
-3. Match `public/manifest.json`'s name fields to the app name.
+   document title, the header brand, and the auth pages. Match
+   `public/manifest.json`'s `short_name`/`name` to it.
+2. Set the look and feel by editing the design tokens in `src/styles.css` —
+   the one file that re-themes the whole app (see CONTEXT.md §4).
+3. Replace `src/routes/index.tsx` with the app's real home page. It currently
+   renders a "your app is being built" placeholder that the user is watching
+   in a live preview, so replace it early. The landing page IS the app — don't
+   build a separate "welcome" screen.
 4. Build the first feature — usually `docs/recipes/crud.md`.
+
+CONTEXT.md §1 has the same checklist with the exact files and commands.
 
 ## Stack
 
