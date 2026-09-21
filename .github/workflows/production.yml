@@ -1,0 +1,32 @@
+name: Production template
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  production:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: production-test-only
+          POSTGRES_DB: production_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U app -d production_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t template-production-test .
+      - name: Test the production image without development dependencies
+        run: >-
+          docker run --rm --network host
+          -e DATABASE_URL_TEST=postgres://app:production-test-only@127.0.0.1:5432/production_test
+          -v "$PWD/scripts/test-production.mjs:/app/scripts/test-production.mjs:ro"
+          template-production-test node scripts/test-production.mjs

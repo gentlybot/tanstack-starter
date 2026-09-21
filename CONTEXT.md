@@ -388,9 +388,15 @@ npm run generate-routes
 npm run check        # prettier + typecheck + lint + test — run before done
 npm run test         # vitest only
 npm run build
+npm start            # built production web server
+npm run start:ws      # built production WebSocket server
+npm run start:worker  # built production background worker
 ```
 
-On Gently, the web process, ws server, worker, Postgres, env injection, and
+For production, see [DEPLOYMENT.md](./DEPLOYMENT.md) and the included Dockerfile.
+The production smoke test uses a fresh database and never runs the dev seed.
+
+In Gently development environments, the web process, ws server, worker, Postgres, env injection, and
 the seed are all started for you by the template runtime config — you do not
 need to run them by hand.
 
@@ -405,14 +411,14 @@ Don't add a package before checking here.
 **Runtime** — `@tanstack/react-start`, `react-router`, `react-query`,
 `react-form`, `router-plugin`, `react-devtools` · `react` 19 / `react-dom` ·
 `better-auth` + `@better-auth/drizzle-adapter` · `drizzle-orm`, `drizzle-kit`,
-`pg` · `pg-boss` · `ws` · `zod` 4 · `tailwindcss` 4 + `@tailwindcss/vite` +
+`pg` · `pg-boss` · `ws` · `dotenv` · `zod` 4 · `tailwindcss` 4 + `@tailwindcss/vite` +
 `@tailwindcss/typography` + `tw-animate-css` · `radix-ui`,
 `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react`,
 `next-themes`, `sonner` · `@fontsource-variable/inter`
 
 **Dev** — `vite` 8, `vitest` 4, `jsdom`, `@testing-library/react` + `/dom`,
 `typescript` 6, `eslint` + `@tanstack/eslint-config`, `prettier`, `tsx`,
-`dotenv`, `@types/*`
+`nitro`, `esbuild`, `@types/*`
 
 Notably absent: any charting, date, i18n, animation (beyond
 `tw-animate-css`), rich-text, or file-storage library.

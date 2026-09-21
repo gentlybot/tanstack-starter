@@ -6,6 +6,7 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { nitro } from 'nitro/vite'
 
 const allowedHosts = process.env.VITE_ALLOWED_HOSTS?.split(',')
   .map((host) => host.trim())
@@ -23,7 +24,14 @@ const config = defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', '@tanstack/react-query'],
   },
-  plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
+  plugins: [
+    devtools(),
+    tailwindcss(),
+    tanstackStart(),
+    // Unit tests do not need Nitro's production server lifecycle.
+    !process.env.VITEST && nitro({ preset: 'node-server' }),
+    viteReact(),
+  ],
   server: {
     // Bind all interfaces and allow only the proxy/sandbox hosts supplied by
     // the runtime. Undefined preserves Vite's safe localhost defaults.

@@ -76,3 +76,19 @@ wss.on('connection', (socket) => {
 server.listen(port, () => {
   console.log(`[ws] listening on :${port} (WebSocket path: /ws)`)
 })
+
+let stopping = false
+function stop() {
+  if (stopping) return
+  stopping = true
+  server.close()
+  for (const client of wss.clients) client.close(1001, 'Server shutting down')
+  const deadline = setTimeout(() => {
+    for (const client of wss.clients) client.terminate()
+    server.closeAllConnections()
+  }, 5_000)
+  deadline.unref()
+  wss.close(() => clearTimeout(deadline))
+}
+process.once('SIGTERM', stop)
+process.once('SIGINT', stop)

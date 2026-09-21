@@ -88,6 +88,10 @@ uploads, email, and SEO.
 
 ## Scripts
 
+For production, use the included Dockerfile and [deployment guide](./DEPLOYMENT.md).
+It documents the web, worker and WebSocket commands, required secrets,
+migrations and readiness checks. Production does not run the development seed.
+
 | Script                | What it does                               |
 | --------------------- | ------------------------------------------ |
 | `npm run dev`         | Web app on :3000                           |

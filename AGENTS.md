@@ -66,7 +66,14 @@ npm run db:studio   # Drizzle Studio (database browser)
 npm run check       # prettier + typecheck + lint + tests — run before done
 npm run test        # vitest only
 npm run build       # production build
+npm start           # built production web server
+npm run start:ws     # built production WebSocket server
+npm run start:worker # built production background worker
 ```
+
+For deployment, follow [DEPLOYMENT.md](./DEPLOYMENT.md). Keep the Dockerfile
+and production smoke check working when changing runtime dependencies or
+startup behavior. Never seed development data in production.
 
 `DATABASE_URL` must point at Postgres (see `.env.example`). On gently the web
 process, the ws server, the worker, the database, env injection, and the seed

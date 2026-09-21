@@ -10,7 +10,19 @@ import { getBoss } from './boss'
 
 async function main() {
   // Connects to Postgres and keeps the process alive.
-  await getBoss()
+  const boss = await getBoss()
+
+  let stopping = false
+  const stop = () => {
+    if (stopping) return
+    stopping = true
+    void boss.stop({ graceful: true, timeout: 10_000 }).catch((error) => {
+      console.error('[worker] failed to stop', error)
+      process.exitCode = 1
+    })
+  }
+  process.once('SIGTERM', stop)
+  process.once('SIGINT', stop)
 
   // Register handlers here, one line per queue:
   //
