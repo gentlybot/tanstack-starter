@@ -150,9 +150,18 @@ export const listPosts = createServerFn({ method: 'GET' }).handler(async () => {
   pre-styled `field.TextField` / `field.TextareaField` / `field.CheckboxField`
   and `form.SubmitButton`. `src/routes/login.tsx` is the live example;
   `docs/recipes/forms.md` has the full pattern.
-- **Build UI from the vendored shadcn/ui components** in
-  `src/components/ui/`, plus `PageHeader` and `EmptyState` from
-  `src/components/`. Add more with `npx shadcn@latest add <component>`.
+- **Load the official shadcn skill before UI work:**
+  `.agents/skills/shadcn/SKILL.md`. Use it to inspect installed components,
+  search the registry, read current component docs, and compose or add
+  components instead of hand-building equivalents. Prefer the vendored
+  components in `src/components/ui/`, plus `PageHeader` and `EmptyState` from
+  `src/components/`. An MCP server is optional; the skill's project-aware CLI
+  workflow works without one.
+- **The starter's form abstraction wins over generic skill examples.** Keep
+  using `useAppForm` and its field components from `src/components/form.tsx`;
+  do not replace it with raw shadcn `FieldGroup` composition. Project-specific
+  rules in this file and `CONTEXT.md` take precedence over generic skill
+  examples.
 - **Server-only code never reaches the client.** `src/db`, `src/jobs`,
   `src/ws`, and `src/lib/auth.ts` may only be imported from server function
   handlers, server routes, or the standalone processes — never directly from
@@ -207,9 +216,8 @@ The user never sees code — only the pages. Make them look deliberate:
   no bare "no data" text, no layout jumps.
 - Destructive actions get an `AlertDialog` confirm. Async buttons show their
   pending state (SubmitButton does this for you).
-- Prefer restraint: the shadcn defaults, the existing spacing scale
-  (`space-y-6`, `gap-4`), and the type scale already in use. Don't invent new
-  visual styles per page.
+- Prefer restraint: the shadcn defaults, the existing spacing and type scales,
+  and `gap-*` for layout spacing. Don't invent new visual styles per page.
 
 ## Testing
 

@@ -79,6 +79,8 @@ source outside `src/routeTree.gen.ts`.
 | `vite.config.ts`                                                                                | React + Tailwind + TanStack Start plugins, `dedupe: ['react','react-dom']`, `/ws` dev proxy → `:3001`, `allowedHosts` from `VITE_ALLOWED_HOSTS`, vitest config (`environment: 'node'`, `globals: true`). |
 | `drizzle.config.ts`                                                                             | `schema: ./src/db/schema.ts`, `out: ./drizzle`, dialect postgresql, url from `DATABASE_URL`.                                                                                                             |
 | `components.json`                                                                               | shadcn config — style `new-york`, base color `zinc`, icons `lucide`, aliases via `#/`. Needed by `npx shadcn@latest add`.                                                                                |
+| `.agents/skills/shadcn/`                                                                        | Official shadcn project skill. Agents load it for component discovery, current docs, composition rules, theming, and safe CLI workflows.                                                                 |
+| `skills-lock.json`                                                                              | Pins the source and content hash of the vendored shadcn skill. Update it with `npx skills update shadcn --project -y`.                                                                                   |
 | `tsconfig.json`, `tsr.config.json`, `eslint.config.js`, `prettier.config.js`, `.prettierignore` | Toolchain defaults. Don't edit.                                                                                                                                                                          |
 | `.env.example`                                                                                  | Documents every env var (§10). `.env` is gitignored.                                                                                                                                                     |
 
@@ -335,6 +337,20 @@ Import kit components from `../components/…` and shadcn primitives from
 `../components/ui/<name>` (the `#/` alias also resolves to `src/`). Icons come
 from `lucide-react`, which is already a dependency.
 
+Before building or changing UI, load the repository's `shadcn` skill from
+`.agents/skills/shadcn/SKILL.md`. It reads `components.json` and teaches the
+agent to inspect installed components, search the registry, load current docs,
+compose primitives, use built-in variants, and preview updates instead of
+inventing equivalents. Prefer its on-demand `npx shadcn@latest info`, `search`,
+`docs`, `view`, and `add` workflow; an MCP server is optional, not required.
+
+This starter's canonical TanStack Form integration remains authoritative:
+forms use `useAppForm` and its field components as documented in §5 and
+`docs/recipes/forms.md`. Do not replace that wrapper merely because the generic
+shadcn skill describes `FieldGroup` for projects without an established form
+abstraction. All other project-specific rules in this file and `AGENTS.md`
+likewise take precedence over generic skill examples.
+
 | File in `ui/`   | Exports                                                                                                                                                                         |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `alert-dialog`  | `AlertDialog`, `Trigger`, `Portal`, `Overlay`, `Content`, `Header`, `Footer`, `Title`, `Description`, `Media`, `Action`, `Cancel` (all `AlertDialog*`-prefixed)                 |
@@ -374,8 +390,9 @@ from `lucide-react`, which is already a dependency.
 </Button>
 ```
 
-Anything not listed: `npx shadcn@latest add <component>` (config is already in
-`components.json`).
+Anything not listed: use the shadcn skill to search and read the component docs
+first, then run `npx shadcn@latest add <component>` (`components.json` is
+already configured). Inspect every generated file and run the normal checks.
 
 ---
 
