@@ -39,7 +39,11 @@ zero app content. Do this, in this order — no inspection pass needed:
 5. **Build the first feature** — follow `docs/recipes/crud.md` verbatim. It
    creates `src/routes/_authed.tsx` (the protected layout), the server
    functions, and the list/detail/form pages.
-6. **Verify** — `npm run check` (prettier + typecheck + lint + tests).
+6. **Seed meaningful state** — add idempotent demo records to
+   `seedNonProductionData` in `src/scripts/seed-app-data.ts`, then run
+   `npm run db:seed`. Production has a separate, empty-by-default
+   `seedProductionData` hook for required reference data only.
+7. **Verify** — `npm run check` (prettier + typecheck + lint + tests).
 
 Add nav entries to the `links` array in `src/components/Header.tsx` as you add
 pages, and seed demo rows in `src/scripts/seed.ts` so a fresh environment is
@@ -128,7 +132,8 @@ Naming: `posts.tsx` → `/posts`; `posts.$postId.tsx` → `/posts/:postId`;
 | `src/jobs/queues.ts`                | **Empty** (`export {}`) — add a queue-name constant + payload type per job.                                                                                     |
 | `src/jobs/worker.ts`                | `npm run worker`. Register handlers in `main()`. No handlers yet.                                                                                               |
 | `src/ws/server.ts`                  | `npm run ws` on `WS_PORT` (3001). Presence tracking + `broadcast()`; `ServerEvent`/`ClientEvent` unions to extend. Clients always connect same-origin to `/ws`. |
-| `src/scripts/seed.ts`               | `npm run db:seed`. Idempotent; creates `dev@example.com` / `password1234`. Add app seed data below the marker.                                                  |
+| `src/scripts/seed.ts`               | `npm run db:seed`. Environment-aware entry point; creates `dev@example.com` / `password1234` outside production, then dispatches to the matching app-data hook. |
+| `src/scripts/seed-app-data.ts`      | Empty-by-default `seedProductionData` and `seedNonProductionData` hooks for idempotent app records.                                                             |
 | `src/server/load-env.ts`            | `.env` loader imported first by worker/ws/seed (the web process gets env from Vite).                                                                            |
 | `src/router.tsx`                    | Router + QueryClient wiring. Rarely needs changes.                                                                                                              |
 | `src/integrations/tanstack-query/*` | Query client provider + devtools panel.                                                                                                                         |

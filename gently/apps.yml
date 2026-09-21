@@ -1,0 +1,56 @@
+# Gently workspace runtime config.
+# Keep this in sync with the tanstack-starter template's appsYmlOverride.
+
+tools:
+  - nodejs_22
+
+# Shared environment for setup and every app process.
+env:
+  NODE_ENV: development
+  # Sandbox-only value. Production must provide a durable generated secret.
+  BETTER_AUTH_SECRET: gently-sandbox-dev-secret-0123456789abcdef
+  BETTER_AUTH_URL: '{{ gently.GENTLY_ENVIRONMENT_URL }}'
+  BETTER_AUTH_ALLOWED_HOSTS: '{{ gently.GENTLY_DOMAIN }}'
+  VITE_ALLOWED_HOSTS: '{{ gently.GENTLY_DOMAIN }}'
+
+# Runs once per workspace before apps start. Every command must be idempotent.
+setup:
+  - npm install
+  - npm run db:migrate
+  - npm run db:seed
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    connectionEnv:
+      DATABASE_URL: postgres://app:app@postgres:5432/app
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U app -d app']
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+apps:
+  web:
+    port: 3000
+    routes:
+      - path: /
+    startup:
+      - npm run dev
+    health:
+      - endpoint: /api/health
+
+  ws:
+    port: 3001
+    startup:
+      - npm run ws
+    health:
+      - endpoint: /
+
+  worker:
+    startup:
+      - npm run worker

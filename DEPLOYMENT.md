@@ -27,14 +27,20 @@ Set these runtime variables:
   releases. Never reuse the database password or the development key.
 - `BETTER_AUTH_URL`: the deployment's public HTTPS origin, for authentication
   behind ingress. In a Gently recipe use `{{deployment.URL}}`.
+- `BETTER_AUTH_ALLOWED_HOSTS`: optional comma-separated hostnames when the app
+  is served from multiple approved domains. Keep `BETTER_AUTH_URL` as the
+  canonical fallback. Sessions remain host-local unless you deliberately
+  configure Better Auth's cross-subdomain cookie support.
 
 After Postgres is ready, run `npm run db:migrate` once using the application
 image and runtime `DATABASE_URL`, before starting the app processes. For the
 first deployment use an empty database. Review later SQL changes before
 allowing migrations during rolling releases.
 
-Do not run `db:seed` in production. New users create their own accounts at
-`/signup`. No development account or sample data is installed by this image.
+`NODE_ENV=production npm run db:seed` is safe to run when the app needs
+idempotent production reference data: it invokes only `seedProductionData`,
+which is empty by default. It never creates the development account or demo
+records. New users create their own accounts at `/signup`.
 Postgres needs a persistent volume; application containers do not.
 
 ## Local production check

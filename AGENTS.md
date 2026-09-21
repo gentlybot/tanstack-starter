@@ -31,6 +31,9 @@ When building a new app on this launchpad, do this before anything else:
    in a live preview, so replace it early. The landing page IS the app — don't
    build a separate "welcome" screen.
 4. Build the first feature — usually `docs/recipes/crud.md`.
+5. Add realistic, idempotent demo records to `seedNonProductionData` in
+   `src/scripts/seed-app-data.ts`, then run `npm run db:seed`. Add only required
+   reference data to `seedProductionData`; it is empty by default.
 
 CONTEXT.md §1 has the same checklist with the exact files and commands.
 
@@ -61,7 +64,7 @@ npm run ws          # realtime WebSocket server on :3001 (separate process)
 npm run worker      # background job worker (separate process)
 npm run db:generate # generate a SQL migration from schema.ts changes
 npm run db:migrate  # apply pending migrations
-npm run db:seed     # idempotent dev data (dev@example.com / password1234)
+npm run db:seed     # environment-aware, idempotent app data
 npm run db:studio   # Drizzle Studio (database browser)
 npm run check       # prettier + typecheck + lint + tests — run before done
 npm run test        # vitest only
@@ -211,3 +214,10 @@ coverage on page components.
   (`import.meta.env.VITE_*`). New third-party keys: add to `.env.example`
   (documented), `.env` (local value), and the Gently template runtime `env:`
   block (sandbox value).
+- `npm run db:seed` dispatches on `NODE_ENV`. Production runs only
+  `seedProductionData`; every other value creates the development account and
+  runs `seedNonProductionData`. Both app-data hooks start as safe no-ops.
+- Set `BETTER_AUTH_URL` to the canonical public origin in production. If the
+  app is served from multiple approved domains, also set the comma-separated
+  `BETTER_AUTH_ALLOWED_HOSTS`; Better Auth resolves each request against that
+  allowlist. This does not share cookies across unrelated domains.

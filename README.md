@@ -43,7 +43,7 @@ cp .env.example .env
 # 3. Install, migrate, seed, run
 npm install
 npm run db:migrate
-npm run db:seed        # dev account: dev@example.com / password1234
+npm run db:seed        # non-prod account + app seed hook
 
 npm run dev            # web app        → http://localhost:3000
 npm run ws             # realtime       → ws process on :3001 (separate terminal)
@@ -99,7 +99,7 @@ migrations and readiness checks. Production does not run the development seed.
 | `npm run worker`      | Background job worker                      |
 | `npm run db:generate` | Generate SQL migration from schema changes |
 | `npm run db:migrate`  | Apply pending migrations                   |
-| `npm run db:seed`     | Idempotent dev data                        |
+| `npm run db:seed`     | Environment-aware, idempotent app data     |
 | `npm run db:studio`   | Drizzle Studio                             |
 | `npm run check`       | prettier + typecheck + lint + tests        |
 | `npm run test`        | Vitest                                     |
