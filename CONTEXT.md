@@ -39,11 +39,22 @@ zero app content. Do this, in this order — no inspection pass needed:
 5. **Build the first feature** — follow `docs/recipes/crud.md` verbatim. It
    creates `src/routes/_authed.tsx` (the protected layout), the server
    functions, and the list/detail/form pages.
-6. **Seed meaningful state** — add idempotent demo records to
-   `seedNonProductionData` in `src/scripts/seed-app-data.ts`, then run
-   `npm run db:seed`. Production has a separate, empty-by-default
-   `seedProductionData` hook for required reference data only.
-7. **Verify** — `npm run check` (prettier + typecheck + lint + tests).
+6. **Make authenticated states easy to test** — keep the seeded development
+   account and add deterministic non-production users for the app's meaningful
+   roles or states. At minimum, provide a populated primary user and an
+   alternate user so ownership boundaries can be tested. Add a development-only
+   **Test accounts** section to `/login` with clearly labelled one-click buttons
+   that call the normal `authClient.signIn.email` flow. Humans and browser agents
+   must be able to enter each state without copying credentials. Gate the section
+   with `import.meta.env.DEV`; never create a bypass endpoint or expose test
+   credentials in a production build.
+7. **Seed meaningful state** — add idempotent demo records to
+   `seedNonProductionData` in `src/scripts/seed-app-data.ts`, owned by the
+   matching test users, then run `npm run db:seed`. Production has a separate,
+   empty-by-default `seedProductionData` hook for required reference data only.
+8. **Verify** — use the test-account buttons to exercise each role/state and
+   data isolation in the browser, then run `npm run check` (prettier +
+   typecheck + lint + tests).
 
 Add nav entries to the `links` array in `src/components/Header.tsx` as you add
 pages, and seed demo rows in `src/scripts/seed.ts` so a fresh environment is
@@ -238,6 +249,30 @@ Client: `authClient.signIn.email({email, password})`,
 `authClient.signUp.email({name, email, password})`, `authClient.signOut()` —
 each returns `{ error }`; call `router.invalidate()` after success.
 
+**Development test identities**
+
+- `src/scripts/seed.ts` already creates `dev@example.com` / `password1234`
+  outside production. When the app gains authenticated features, expand this
+  into a small, deterministic set: a primary account with representative data,
+  an alternate account for ownership/isolation checks, and one account per
+  distinct permission role when applicable. Create them only on the
+  non-production branch and keep the seed idempotent.
+- Pass the seeded user IDs into `seedNonProductionData` and attach realistic
+  records to the appropriate owners. Do not create disconnected users that
+  all open onto the same empty state.
+- Add a compact **Test accounts** panel to `/login`, visible only when
+  `import.meta.env.DEV` is true. Each button names the account's role/scenario
+  and signs in with `authClient.signIn.email`, followed by
+  `router.invalidate()` and the normal redirect. This is a convenience UI over
+  real authentication—not a special session endpoint, hard-coded cookie, or
+  authorization bypass.
+- Use this path during browser verification. Check the primary flow, switch to
+  the alternate identity to prove user-owned data is isolated, and exercise
+  each role-specific path the feature introduces.
+- Production must run neither the test-user seed nor the test-account UI. Never
+  put production secrets in source; fixed credentials are acceptable only for
+  these disposable non-production identities.
+
 Reading the session in a component: `const { session } = Route.useRouteContext()`
 (or `useRouteContext({ from: '__root__' })`). `session?.user` has
 `id`, `name`, `email`, `emailVerified`, `image`.
@@ -405,7 +440,9 @@ In Gently development environments, the web process, ws server, worker, Postgres
 the seed are all started for you by the template runtime config — you do not
 need to run them by hand.
 
-Sign in as `dev@example.com` / `password1234` to see anything behind auth.
+Until the app adds its role/scenario accounts, sign in as `dev@example.com` /
+`password1234`. Once it does, use the development-only **Test accounts** panel
+on `/login` rather than manually copying credentials.
 
 ---
 

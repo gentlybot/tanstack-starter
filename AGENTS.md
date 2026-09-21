@@ -31,9 +31,16 @@ When building a new app on this launchpad, do this before anything else:
    in a live preview, so replace it early. The landing page IS the app — don't
    build a separate "welcome" screen.
 4. Build the first feature — usually `docs/recipes/crud.md`.
-5. Add realistic, idempotent demo records to `seedNonProductionData` in
-   `src/scripts/seed-app-data.ts`, then run `npm run db:seed`. Add only required
-   reference data to `seedProductionData`; it is empty by default.
+5. Make authenticated states easy to test. Keep the default development user,
+   then seed at least a populated primary user and an alternate user; add one
+   user per permission role when the app has roles. Add a compact **Test
+   accounts** panel to `/login`, gated by `import.meta.env.DEV`, with clearly
+   labelled one-click buttons that use the normal `authClient.signIn.email`
+   flow. This must never be an auth bypass or appear in production.
+6. Add realistic, idempotent demo records to `seedNonProductionData` in
+   `src/scripts/seed-app-data.ts`, owned by those test users, then run
+   `npm run db:seed`. Add only required reference data to
+   `seedProductionData`; it is empty by default.
 
 CONTEXT.md §1 has the same checklist with the exact files and commands.
 
@@ -87,6 +94,17 @@ are all declared by the externally managed Gently template runtime config.
 Auth works out of the box: sign-up/sign-in pages, sessions, and a seeded dev
 account (`dev@example.com` / `password1234`). The root route puts the session
 into router context, so every route can read `context.session`.
+
+For every authenticated app, make the important signed-in states directly
+reachable by humans and browser agents. Seed deterministic non-production test
+users for the meaningful roles/scenarios (at minimum a populated primary user
+and an alternate user for data-isolation checks), and show them as one-click
+options on `/login` only under `import.meta.env.DEV`. The buttons must use the
+ordinary Better Auth email/password sign-in, then invalidate the router and
+follow the normal redirect. Never add a special session endpoint, hard-coded
+cookie, authorization bypass, production test user, or production-visible test
+credentials. During browser verification, use these identities to check the
+main flow, ownership isolation, and each role-specific path.
 
 **Every server function that reads or writes user-owned data must call
 `requireUser()` (from `src/lib/auth-server.ts`) first and filter every query
