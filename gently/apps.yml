@@ -14,8 +14,10 @@ env:
   VITE_ALLOWED_HOSTS: '{{ gently.GENTLY_DOMAIN }}'
 
 # Runs once per workspace before apps start. Every command must be idempotent.
+# npm ci installs the committed lockfile without rewriting it, so new threads
+# can reuse a sandbox image baked from it.
 setup:
-  - npm install
+  - npm ci
   - npm run db:migrate
   - npm run db:seed
 
