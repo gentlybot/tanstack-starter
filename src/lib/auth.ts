@@ -4,7 +4,7 @@ import { tanstackStartCookies } from 'better-auth/tanstack-start'
 
 import { db } from '../db/index'
 import * as schema from '../db/schema'
-import { resolveAuthBaseURL } from './auth-base-url'
+import { clearUnconfiguredAuthEnv, resolveAuthBaseURL } from './auth-base-url'
 
 // Server-side auth instance (better-auth). HTTP endpoints are mounted at
 // /api/auth/* by src/routes/api/auth/$.ts; the browser talks to them through
@@ -12,6 +12,12 @@ import { resolveAuthBaseURL } from './auth-base-url'
 //
 // Email + password is enabled out of the box. To add social providers, add a
 // `socialProviders` block here (keys via env) — see the better-auth docs.
+
+// While Gently builds the prepared image (where `npm run db:seed` runs), the
+// sandbox origin does not exist yet and BETTER_AUTH_URL can still hold its
+// `{{ gently.GENTLY_ENVIRONMENT_URL }}` template. Drop it so Better Auth falls
+// back to request inference instead of failing on an invalid base URL.
+clearUnconfiguredAuthEnv(process.env)
 
 export const auth = betterAuth({
   // BETTER_AUTH_SECRET signs session tokens — required in production, and a

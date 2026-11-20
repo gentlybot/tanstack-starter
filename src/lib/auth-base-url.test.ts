@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { resolveAuthBaseURL } from './auth-base-url'
+import { clearUnconfiguredAuthEnv, resolveAuthBaseURL } from './auth-base-url'
 
 describe('resolveAuthBaseURL', () => {
   it('uses the canonical URL for a single-domain deployment', () => {
@@ -29,5 +29,43 @@ describe('resolveAuthBaseURL', () => {
 
   it('leaves request inference available when no origin policy is configured', () => {
     expect(resolveAuthBaseURL({})).toBeUndefined()
+  })
+
+  it('treats unrendered Gently templates as unset (prepared-image builds have no origin yet)', () => {
+    expect(
+      resolveAuthBaseURL({
+        BETTER_AUTH_URL: '{{ gently.GENTLY_ENVIRONMENT_URL }}',
+        BETTER_AUTH_ALLOWED_HOSTS: '{{ gently.GENTLY_DOMAIN }}',
+      }),
+    ).toBeUndefined()
+  })
+
+  it('treats blank values as unset', () => {
+    expect(
+      resolveAuthBaseURL({
+        BETTER_AUTH_URL: ' ',
+        BETTER_AUTH_ALLOWED_HOSTS: '',
+      }),
+    ).toBeUndefined()
+  })
+
+  it('clears unrendered or blank origin env vars and keeps real ones', () => {
+    const env: NodeJS.ProcessEnv = {
+      BETTER_AUTH_URL: '{{ gently.GENTLY_ENVIRONMENT_URL }}',
+      BETTER_AUTH_ALLOWED_HOSTS: ' ',
+      OTHER: '{{ gently.GENTLY_DOMAIN }}',
+    }
+    clearUnconfiguredAuthEnv(env)
+    expect(env).toEqual({ OTHER: '{{ gently.GENTLY_DOMAIN }}' })
+
+    const real: NodeJS.ProcessEnv = {
+      BETTER_AUTH_URL: 'https://app.example.com',
+      BETTER_AUTH_ALLOWED_HOSTS: 'app.example.com',
+    }
+    clearUnconfiguredAuthEnv(real)
+    expect(real).toEqual({
+      BETTER_AUTH_URL: 'https://app.example.com',
+      BETTER_AUTH_ALLOWED_HOSTS: 'app.example.com',
+    })
   })
 })
